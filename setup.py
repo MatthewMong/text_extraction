@@ -7,7 +7,7 @@ setup(name='text_extraction',
       author='Matthew Mong',
       author_email='matthew.mong1999@gmail.com',
       license='MIT',
-      packages=['flask', 'biopython'],
+      packages=['flask', 'biopython', 'spacy'],
       install_requires=[
           'markdown',
       ],

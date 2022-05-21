@@ -1,10 +1,30 @@
 from flask import Flask
 from flask import request
 from Bio import Entrez
+from spacy.matcher import PhraseMatcher
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+matcher = PhraseMatcher(nlp.vocab)
+terms = ["n=", "sample size", "16 subjects"]
+patterns = list(nlp.tokenizer.pipe(terms))
+matcher.add("TerminologyList", patterns)
 
 email = ''
-
 app = Flask(__name__)
+
+
+@app.route('/paper')
+def papers():
+    doi = request.args.get('doi')
+    Entrez.email = email
+    handle = Entrez.elink(dbfrom="pubmed", db="pmc", linkname="pubmed_pmc", id=doi, retmode="xml")
+    id_return = Entrez.read(handle)
+    handle.close()
+    handle = Entrez.efetch(db="pmc", id=id_return[0]['LinkSetDb'][0]['Link'][0]['Id']) 
+    records = handle.read()
+    handle.close()
+    return f'{records}'
 
 @app.route("/")
 def entrance():
@@ -18,9 +38,19 @@ def entrance():
         pmid = int(str(pubmed_article['MedlineCitation']['PMID']))
         article = pubmed_article['MedlineCitation']['Article']
         if 'Abstract' in article:
-            abstract = article['Abstract']['AbstractText'][0]
-            abstract_dict[pmid] = abstract
+            abstract = ''.join(article['Abstract']['AbstractText'])
+            abstract_dict[pmid] = abstract.encode("ascii", "ignore").decode()
         else:
             without_abstract.append(pmid)
     handle.close()
-    return f'{abstract_dict}\n{without_abstract}'
+    sentence_dict = {}
+    for key, abstract in abstract_dict.items():
+        sentence_dict[key] = []
+        text = nlp(abstract)
+        sentences = text.sents
+        for match_id, start, end in matcher(text):
+            print("Matched based on token shape:", text[start:end])
+        for sentence in sentences:
+            sentence_dict[key].append(sentence)
+        
+    return f'{sentence_dict}'
