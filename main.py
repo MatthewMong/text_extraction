@@ -1,14 +1,26 @@
 from flask import Flask
 from flask import request
 from Bio import Entrez
-from spacy.matcher import PhraseMatcher
+from spacy import displacy
+from spacy.matcher import Matcher
 import spacy
 
 nlp = spacy.load("en_core_web_sm")
-matcher = PhraseMatcher(nlp.vocab)
-terms = ["n=", "sample size", "16 subjects"]
-patterns = list(nlp.tokenizer.pipe(terms))
-matcher.add("TerminologyList", patterns)
+matcher = Matcher(nlp.vocab)
+matched_sents = []
+pattern = [{"LIKE_NUM": True}, {"POS": "NOUN"}]
+def collect_sents(matcher, doc, i, matches):
+    match_id, start, end = matches[i]
+    span = doc[start:end]  # Matched span
+    sent = span.sent
+    match_ents = [{
+        "start": span.start_char - sent.start_char,
+        "end": span.end_char - sent.start_char,
+        "label": "MATCH",
+    }]
+    matched_sents.append({"text": sent.text, "ents": match_ents})
+
+matcher.add("Subjects", [pattern], on_match=collect_sents)  # add pattern
 
 email = ''
 app = Flask(__name__)
@@ -47,6 +59,7 @@ def entrance():
     for key, abstract in abstract_dict.items():
         sentence_dict[key] = []
         text = nlp(abstract)
+        print(text)
         sentences = text.sents
         for match_id, start, end in matcher(text):
             print("Matched based on token shape:", text[start:end])
