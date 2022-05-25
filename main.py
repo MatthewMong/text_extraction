@@ -8,7 +8,10 @@ import spacy
 nlp = spacy.load("en_core_web_sm")
 matcher = Matcher(nlp.vocab)
 matched_sents = []
-pattern = [{"LIKE_NUM": True}, {"POS": "NOUN"}]
+subject_pattern = [{"LIKE_NUM": True}, {"POS": "ADJ", "OP": "*"}, {"POS": "NOUN"}]
+acronym_pattern = [{"LIKE_NUM": True}, {"IS_UPPER": True}]
+n_pattern = [{"TEXT": {"REGEX": "^n="}}]
+n_spaces_pattern = [{"LOWER": "n"}, {"TEXT": "="}, {"LIKE_NUM": True}]
 def collect_sents(matcher, doc, i, matches):
     match_id, start, end = matches[i]
     span = doc[start:end]  # Matched span
@@ -20,7 +23,7 @@ def collect_sents(matcher, doc, i, matches):
     }]
     matched_sents.append({"text": sent.text, "ents": match_ents})
 
-matcher.add("Subjects", [pattern], on_match=collect_sents)  # add pattern
+matcher.add("Subjects", [subject_pattern, n_pattern,n_spaces_pattern, acronym_pattern], on_match=collect_sents)  # add pattern
 
 email = ''
 app = Flask(__name__)
@@ -50,7 +53,7 @@ def entrance():
         pmid = int(str(pubmed_article['MedlineCitation']['PMID']))
         article = pubmed_article['MedlineCitation']['Article']
         if 'Abstract' in article:
-            abstract = ''.join(article['Abstract']['AbstractText'])
+            abstract = ' '.join(article['Abstract']['AbstractText'])
             abstract_dict[pmid] = abstract.encode("ascii", "ignore").decode()
         else:
             without_abstract.append(pmid)
