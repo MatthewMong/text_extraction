@@ -5,13 +5,18 @@ from spacy.matcher import Matcher
 from spacy import displacy
 import spacy
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_trf")
 
 n_matcher = Matcher(nlp.vocab)
 sex_matcher = Matcher(nlp.vocab)
-# subject_pattern = [{"LIKE_NUM": True}, {"POS": "ADJ", "OP": "*"}, {"POS": "NOUN", "DEP": {"IN": ["acomp","pobj", "ROOT", "nsubjpass", "nsubj", "conj","compound"]}}]
+age_matcher = Matcher(nlp.vocab)
 
-subject_pattern = [{"LIKE_NUM": True}, {"POS": "ADJ", "OP": "*"}, {"POS": "NOUN", "TEXT": {"NOT_IN": ["%"]}}]
+age_category = [{"LEMMA":{"IN": ["adult", "teen", "child", "infant"]}}]
+age_year = [{"LEMMA":{"IN": ["age, year"]}}]
+age_matcher.add('category', [age_category])
+age_matcher.add('year', [age_year])
+subject_pattern = [{"ENT_TYPE": {"IN" : ["CARDINAL"]}, "OP": "+"}, {"POS": "ADJ", "OP": "*"}, {"POS": "NOUN", "TEXT": {"NOT_IN": ["%"]}, "LENGTH": {">": 2}}]
+
 acronym_pattern = [{"LIKE_NUM": True}, {"IS_UPPER": True}]
 n_pattern = [{"TEXT": {"REGEX": "^n="}}]
 n_spaces_pattern = [{"LOWER": "n"}, {"TEXT": "="}, {"LIKE_NUM": True}]
@@ -59,17 +64,27 @@ def entrance():
     handle.close()
     for key, abstract in abstract_dict.items():
         text = nlp(abstract)
-        # for tok in text:
-        #     print(tok.i, tok, tok.pos_, tok.dep_, tok.head.i, sep="\t")
         potential_n = []
         matched = n_matcher(text)
         for match_id, start, end in matched:
+            if len(potential_n) > 0 and end == potential_n[-1].end:
+                potential_n.pop()
             potential_n.append(text[start:end])
+
         sexes = sex_matcher(text)
         potential_sexes = []
         for match_id, start, end in sexes:
             potential_sexes.append(text[start:end])
-    return f'{text}</br>possible sample sizes: </br>{potential_n}</br>possible sexes: </br>{set(potential_sexes)}'
+        ages = age_matcher(text)
+        potential_ages = []
+        for match_id, start, end in ages:
+            potential_ages.append(text[start:end])
+        if len(potential_ages) == 0:
+            potential_ages.append("adult")
+    if (len(abstract_dict.items()) > 0):
+        return f'<b>input</b><br/>{text}<br/><b>possible sample sizes:</b><br/>{potential_n}<br/><b>possible sexes:</b><br/>{set(potential_sexes)}<br/><b>possible ages:</b><br/>{set(potential_ages)}'
+    else:
+        return '<p>no abstract</p>'
 
 
 if __name__ == '__main__':
