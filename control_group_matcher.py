@@ -2,7 +2,7 @@ from spacy.matcher import Matcher
 
 def get_control_groups(nlp, text):
     control_group_matcher = Matcher(nlp.vocab)
-    control = [{"LEMMA": "control"}, {"LEMMA": "group", "OP": "?"}]
+    control = [{"LEMMA": "control"},{"POS": "ADJ", "OP": "*"}, {"LEMMA": "group", "OP": "?"}]
     control_group_matcher.add("controlGroup", [control])
     control_groups = control_group_matcher(text)
     potential_control_groups = []
@@ -12,7 +12,7 @@ def get_control_groups(nlp, text):
 
 def get_healthy_control_groups(nlp, text):
     healthy_control_group_matcher = Matcher(nlp.vocab)
-    healthy_control = [{"LEMMA": "healthy"},{"LEMMA": "control"}, {"LEMMA": "group", "OP": "?"}]
+    healthy_control = [{"LEMMA": "healthy"},{"POS": "ADJ", "OP": "*"},{"LEMMA": "control"}, {"LEMMA": "group", "OP": "?"}]
     healthy_control_group_matcher.add("healthyControlGroup", [healthy_control])
     healthy_control_groups = healthy_control_group_matcher(text)
     potential_healthy_control_groups = []
