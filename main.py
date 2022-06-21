@@ -46,6 +46,8 @@ def entrance():
     handle.close()
     for key, abstract in abstract_dict.items():
         text = nlp(abstract)
+        # for token in text:
+        #     print(token.text, token.pos_, token.dep_)
         potential_n = get_n(nlp, text)
         potential_sexes = get_sexes(nlp, text)
         potential_fluids = get_fluids(nlp, text)
@@ -55,7 +57,7 @@ def entrance():
         potential_healthy_control_groups = get_healthy_control_groups(nlp, text)
         
     if (len(abstract_dict.items()) > 0):
-        return f'<b>input</b><br/>{text}<br/><b>possible sample sizes:</b><br/>{potential_n}<br/><b>possible sexes:</b><br/>{set(potential_sexes)}<br/><b>possible ages:</b><br/>{set(potential_ages)}<br/><b>possible fluids:</b><br/>{set(potential_fluids)}<br/><b>possible omics:</b><br/>{set(potential_omics)}<br/><b>possible control group:</b><br/>{len(potential_control_groups) != 0}<br/><b>possible healthy control group:</b><br/>{len(potential_healthy_control_groups) != 0}'
+        return f'<b>input</b><br/>{text}<br/><b>possible sample sizes:</b><br/>{potential_n}<br/><b>possible sexes:</b><br/>{set(potential_sexes)}<br/><b>possible ages:</b><br/>{set(potential_ages)}<br/><b>possible fluids:</b><br/>{set(potential_fluids)}<br/><b>possible omics:</b><br/>{set(potential_omics)}<br/><b>possible control group:</b><br/>{potential_control_groups}<br/><b>possible healthy control group:</b><br/>{potential_healthy_control_groups}'
     else:
         return '<p>no abstract</p>'
 
