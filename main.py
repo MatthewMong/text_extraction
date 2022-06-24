@@ -33,7 +33,7 @@ def entrance():
     abstract_dict = {}
     without_abstract = []
     Entrez.email = email
-    handle = Entrez.efetch(db="pubmed", id=''.join(doi),rettype="xml", retmode="text") 
+    handle = Entrez.efetch(db="pubmed", id=','.join(doi),rettype="xml", retmode="text") 
     records = Entrez.read(handle)
     for pubmed_article in records['PubmedArticle']:
         pmid = int(str(pubmed_article['MedlineCitation']['PMID']))
@@ -44,6 +44,7 @@ def entrance():
         else:
             without_abstract.append(pmid)
     handle.close()
+    results = []
     for key, abstract in abstract_dict.items():
         text = nlp(abstract)
         # for token in text:
@@ -55,9 +56,9 @@ def entrance():
         potential_ages = get_age(nlp, text)
         potential_control_groups = get_control_groups(nlp, text)
         potential_healthy_control_groups = get_healthy_control_groups(nlp, text)
-        
+        results.append(f'<b>input</b><br/>{text}<br/><b>possible sample sizes:</b><br/>{potential_n}<br/><b>possible sexes:</b><br/>{set(potential_sexes)}<br/><b>possible ages:</b><br/>{set(potential_ages)}<br/><b>possible fluids:</b><br/>{set(potential_fluids)}<br/><b>possible omics:</b><br/>{set(potential_omics)}<br/><b>possible control group:</b><br/>{potential_control_groups}<br/><b>possible healthy control group:</b><br/>{potential_healthy_control_groups}')
     if (len(abstract_dict.items()) > 0):
-        return f'<b>input</b><br/>{text}<br/><b>possible sample sizes:</b><br/>{potential_n}<br/><b>possible sexes:</b><br/>{set(potential_sexes)}<br/><b>possible ages:</b><br/>{set(potential_ages)}<br/><b>possible fluids:</b><br/>{set(potential_fluids)}<br/><b>possible omics:</b><br/>{set(potential_omics)}<br/><b>possible control group:</b><br/>{potential_control_groups}<br/><b>possible healthy control group:</b><br/>{potential_healthy_control_groups}'
+        return '<br/>'.join(results)
     else:
         return '<p>no abstract</p>'
 
